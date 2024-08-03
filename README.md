@@ -2,7 +2,7 @@
 
 Add certs autorenewal capabilities to your OpenSearch cluster with this OpenSearch + [cert-manager](https://cert-manager.io/docs/installation/kubectl/) + [Reloader](https://github.com/stakater/Reloader?tab=readme-ov-file#how-to-use-reloader) boilerplate.
 
-We choose cert-manager for certs management and Reloader for rolling update through annotations.
+We choose cert-manager for certs management and Reloader to perform rolling updates (restart) of pods through annotations.
 
 This repo exists because neither the official [OpenSearch Kubernetes Helm chart](https://github.com/opensearch-project/helm-charts) nor the operator [currently support auto cert renewal](https://github.com/opensearch-project/opensearch-k8s-operator/issues/399) (crazy uh?).
 
