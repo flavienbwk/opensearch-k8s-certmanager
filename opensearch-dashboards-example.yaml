@@ -1,0 +1,64 @@
+opensearchHosts: "https://opensearch-cluster-master:9200"
+replicaCount: 1
+
+secretMounts:
+  - name: os-dashboards-certs
+    secretName: os-dashboards-certs
+    path: /usr/share/opensearch-dashboards/config/dashboards-certs
+  - name: securityconfig-secret
+    secretName: securityconfig-secret
+    path: /usr/share/opensearch-dashboards/config/opensearch-security
+  - name: os-certs
+    secretName: os-certs
+    path: /usr/share/opensearch-dashboards/config/os-certs
+
+annotations:
+  reloader.stakater.com/auto: "true"
+  secret.reloader.stakater.com/reload: "os-dashboards-certs"
+
+config:
+  opensearch_dashboards.yml: |
+    server.host: '0.0.0.0'
+    server.ssl.enabled: true
+    server.ssl.key: /usr/share/opensearch-dashboards/config/dashboards-certs/tls.key
+    server.ssl.certificate: /usr/share/opensearch-dashboards/config/dashboards-certs/tls.crt
+    server.ssl.certificateAuthorities: [ "/usr/share/opensearch-dashboards/config/dashboards-certs/ca.crt" ]
+
+    opensearch.hosts: [https://opensearch-cluster-master:9200]
+    opensearch.ssl.verificationMode: full
+    opensearch.ssl.certificateAuthorities: [ "/usr/share/opensearch-dashboards/config/os-certs/ca.crt" ]
+    opensearch.username: dashboarduser
+    opensearch.password: kibanaserver
+    opensearch.requestHeadersWhitelist: ["securitytenant","Authorization", "Basic Authorization"]
+
+    opensearch_security.multitenancy.enabled: true
+    opensearch_security.multitenancy.tenants.preferred: [Private, Global]
+    opensearch_security.readonly_mode.roles: [kibana_read_only]
+    opensearch_security.cookie.secure: true
+    opensearch_security:
+      auth:
+        type: ["basicauth"]
+        multiple_auth_enabled: false
+  ssl:
+    enabled: true
+    key: /usr/share/opensearch-dashboards/config/dashboards-certs/tls.key
+    certificate: /usr/share/opensearch-dashboards/config/dashboards-certs/tls.crt
+
+dashboardAnnotations:
+  secret.reloader.stakater.com/reload: "os-dashboards-certs"
+
+serverHost: "0.0.0.0"
+service:
+  type: NodePort
+  nodePort: 30100
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "512M"
+  limits:
+    cpu: "100m"
+    memory: "512M"
+
+updateStrategy:
+  type: "Recreate"

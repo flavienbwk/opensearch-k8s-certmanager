@@ -1,0 +1,117 @@
+---
+clusterName: "opensearch-cluster"
+nodeGroup: "master"
+
+singleNode: false
+
+masterService: "opensearch-cluster-master"
+
+openSearchAnnotations:
+  secret.reloader.stakater.com/reload: "os-certs"
+
+roles:
+  - master
+  - ingest
+  - data
+  - remote_cluster_client
+
+replicas: 3
+
+opensearchHome: /usr/share/opensearch
+
+config:
+  opensearch.yml: |
+    cluster.name: opensearch-cluster
+    network.host: 0.0.0.0
+    plugins:
+      security:
+        ssl:
+          transport:
+            pemcert_filepath: /usr/share/opensearch/config/certs/tls.crt
+            pemkey_filepath: /usr/share/opensearch/config/certs/tls.key
+            pemtrustedcas_filepath: /usr/share/opensearch/config/certs/ca.crt
+            enforce_hostname_verification: false
+          http:
+            enabled: true
+            pemcert_filepath: /usr/share/opensearch/config/certs/tls.crt
+            pemkey_filepath: /usr/share/opensearch/config/certs/tls.key
+            pemtrustedcas_filepath: /usr/share/opensearch/config/certs/ca.crt
+        allow_unsafe_democertificates: true
+        allow_default_init_securityindex: true
+        authcz:
+          admin_dn:
+            - CN=opensearch-admin,O=EXAMPLE,L=PARIS,ST=IDF,C=FR
+        nodes_dn:
+          - CN=opensearch-node*,O=EXAMPLE,L=PARIS,ST=IDF,C=FR
+        audit.type: internal_opensearch
+        enable_snapshot_restore_privilege: true
+        check_snapshot_restore_write_privileges: true
+        restapi:
+          roles_enabled: ["all_access", "security_rest_api_access"]
+        system_indices:
+          enabled: true
+          indices:
+            [
+              ".opendistro-alerting-config",
+              ".opendistro-alerting-alert*",
+              ".opendistro-anomaly-results*",
+              ".opendistro-anomaly-detector*",
+              ".opendistro-anomaly-checkpoints",
+              ".opendistro-anomaly-detection-state",
+              ".opendistro-reports-*",
+              ".opendistro-notifications-*",
+              ".opendistro-notebooks",
+              ".opendistro-asynchronous-search-response*",
+            ]
+
+secretMounts:
+  - name: os-certs
+    secretName: os-certs
+    path: /usr/share/opensearch/config/certs
+  - name: os-admin-certs
+    secretName: os-admin-certs
+    path: /usr/share/opensearch/config/admin-certs
+
+image:
+  repository: "opensearchproject/opensearch"
+  tag: ""
+  pullPolicy: "IfNotPresent"
+
+labels: {}
+
+opensearchJavaOpts: "-Xmx512M -Xms512M"
+
+resources:
+  requests:
+    cpu: "1000m"
+    memory: "100Mi"
+
+networkHost: "0.0.0.0"
+
+persistence:
+  enabled: true
+  enableInitChown: true
+  labels:
+    enabled: false
+  accessModes:
+    - ReadWriteOnce
+  size: 8Gi
+  annotations: {}
+
+updateStrategy: RollingUpdate
+
+maxUnavailable: 1
+
+securityConfig:
+  enabled: true
+  config:
+    data:
+    securityConfigSecret: "securityconfig-secret"
+
+extraEnvs:
+  - name: DISABLE_INSTALL_DEMO_CONFIG
+    value: "true"
+
+terminationGracePeriod: 120
+
+sysctlVmMaxMapCount: 262144

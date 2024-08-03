@@ -1,0 +1,142 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+  namespace: default
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: os-ca
+  namespace: default
+spec:
+  isCA: true
+  commonName: OpenSearch CA
+  secretName: os-ca-certs
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    encoding: PKCS8
+    rotationPolicy: Always
+  issuerRef:
+    name: selfsigned-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: os-ca-issuer
+  namespace: default
+spec:
+  ca:
+    secretName: os-ca-certs
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: os-admin-certs
+  namespace: default
+spec:
+  secretName: os-admin-certs
+  duration: 8760h # 1 year
+  renewBefore: 360h # 15 days
+  subject:
+    # /C=FR/ST=IDF/L=PARIS/O=EXAMPLE
+    countries:
+      - FR
+    provinces:
+      - IDF
+    localities:
+      - PARIS
+    organizations:
+      - EXAMPLE
+  commonName: opensearch-admin
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    encoding: PKCS8
+    rotationPolicy: Always
+  usages:
+    - client auth
+  issuerRef:
+    name: os-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: os-certs
+  namespace: default
+spec:
+  secretName: os-certs
+  duration: 8760h # 1 year
+  renewBefore: 360h # 15 days
+  subject:
+    # /C=FR/ST=IDF/L=PARIS/O=EXAMPLE
+    countries:
+      - FR
+    provinces:
+      - IDF
+    localities:
+      - PARIS
+    organizations:
+      - EXAMPLE
+  commonName: opensearch-nodes
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    encoding: PKCS8
+    rotationPolicy: Always
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+    - "opensearch-*"
+    - "opensearch-cluster-master"
+  issuerRef:
+    name: os-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: os-dashboards-certs
+  namespace: default
+spec:
+  secretName: os-dashboards-certs
+  duration: 8760h # 1 year
+  renewBefore: 360h # 15 days
+  subject:
+    countries:
+      - FR
+    provinces:
+      - IDF
+    localities:
+      - PARIS
+    organizations:
+      - EXAMPLE
+  commonName: opensearch-dashboard
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    encoding: PKCS8
+    rotationPolicy: Always
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+    - "opensearch-*"
+    - "opensearch-cluster-master"
+  issuerRef:
+    name: os-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
