@@ -1,41 +1,43 @@
 # OpenSearch on K8s with cert-manager
 
-Add certs autorenewal capabilities to your OpenSearch cluster with [cert-manager](https://cert-manager.io/docs/installation/kubectl/).
+Add certs autorenewal capabilities to your OpenSearch cluster with this OpenSearch + [cert-manager](https://cert-manager.io/docs/installation/kubectl/) + [Reloader](https://github.com/stakater/Reloader?tab=readme-ov-file#how-to-use-reloader) boilerplate.
 
-This repo exists because neither the official [OpenSearch Kubernetes Helm chart](https://github.com/opensearch-project/helm-charts) nor the operator [currently support auto cert renewal](https://github.com/opensearch-project/opensearch-k8s-operator/issues/399).
+We choose cert-manager for certs management and Reloader for rolling update through annotations.
 
-We want to easily automate it using cert-manager for certs management and [Reloader](https://github.com/stakater/Reloader?tab=readme-ov-file#how-to-use-reloader) for rolling update through annotations.
+This repo exists because neither the official [OpenSearch Kubernetes Helm chart](https://github.com/opensearch-project/helm-charts) nor the operator [currently support auto cert renewal](https://github.com/opensearch-project/opensearch-k8s-operator/issues/399) (crazy uh?).
 
 Pre-requisites:
 
 - A Kubernetes cluster up and running, accessible through `kubectl` ;
 - (optionally) An OpenSearch cluster deployed with Helm.
 
-## Install
+## Install services
 
-1. Install cert-manager if you don't have it already
+1. **Install** cert-manager if you don't have it already
 
     ```bash
     # Get the latest version at https://cert-manager.io/docs/installation/kubectl/
     kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.2/cert-manager.yaml
     ```
 
-2. Generate certificates
-
-    ```bash
-    kubectl apply -f ./os-certs-cm.yml
-    ```
-
-    To further test the renewal of a certificate, delete its associated secret.
-
-3. Install Reloader
+2. **Install** Reloader
 
     ```bash
     helm repo add stakater https://stakater.github.io/stakater-charts
     helm install reloader stakater/reloader --set reloader.watchGlobally=true --set reloader.reloadOnCreate=true
     ```
 
-4. Setup your OpenSearch cluster with the appropriate cert-manager secrets and Reloader annotations
+## Configure your cluster
+
+1. **Generate** certificates
+
+    ```bash
+    kubectl apply -f ./os-certs-cm.yml
+    ```
+
+2. **Setup** your OpenSearch cluster with the appropriate cert-manager secrets and Reloader annotations
+
+    <br/>
 
     <details>
     <summary>👉 Deploy a new OpenSearch cluster with Helm...</summary>
@@ -71,12 +73,14 @@ Pre-requisites:
 
     </details>
 
+    <br/>
+
     <details>
     <summary>👉 Manually update your existing OpenSearch cluster...</summary>
 
     Whether it is deployed with Helm or the Operator, you want to understand the basic principales of cert-manager and Reloader **so you can update your own manifests/Helm values**.
 
-    At step 2, we've created cert-manager certificates : `os-certs`, `os-admin-certs` and `os-dashboards-certs`. These certs are created as _secrets_ in our cluster. Those secrets must be mounted to our cluster.
+    At step 1, we've created cert-manager certificates : `os-certs`, `os-admin-certs` and `os-dashboards-certs`. These certs are created as _secrets_ in our cluster. Those secrets must be mounted to our cluster.
 
     Each secret includes a `ca.crt`, `tls.crt` and `tls.key` field we'll need to map in our `opensearch.yml` and `opensearch-dashboards.yml` configurations.
 
